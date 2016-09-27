@@ -1,18 +1,14 @@
 <?php namespace Someline\Image;
 
 use Carbon\Carbon;
-use Illuminate\Validation\ValidationException;
-use Someline\Image\Models\SomelineImage;
-use Validator;
 use File;
-use Illuminate\Http\Exception\HttpResponseException;
-use Illuminate\Http\Request;
-use Illuminate\Support\MessageBag;
 use Image;
+use Someline\Image\Models\SomelineImage;
+use Someline\Image\Models\SomelineImageHash;
 use Storage;
-use Symfony\Component\HttpFoundation\File\Exception\FileException;
 use Symfony\Component\HttpFoundation\File\Exception\FileNotFoundException;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
+use Validator;
 
 class SomelineImageService
 {
@@ -26,14 +22,13 @@ class SomelineImageService
     }
 
     /**
-     * @param Request $request
      * @param UploadedFile $file
      * @param string $additionValidatorRule
      * @param bool $isAllowGIF
      * @return false|SomelineImage|null
      * @throws \Exception
      */
-    public function handleUploadedFile(Request $request, UploadedFile $file, $additionValidatorRule = '', $isAllowGIF = false)
+    public function handleUploadedFile(UploadedFile $file, $additionValidatorRule = '', $isAllowGIF = false)
     {
         // check valid
         if (!$file->isValid()) {
@@ -49,10 +44,6 @@ class SomelineImageService
         ]);
         if ($validator->fails()) {
             throw new \Exception($validator->errors()->first());
-        }
-
-        if (!$file->isValid()) {
-            throw new FileException('File is invalid.');
         }
 
         // file info
@@ -493,6 +484,5 @@ class SomelineImageService
             return null;
         }
     }
-
 
 }
