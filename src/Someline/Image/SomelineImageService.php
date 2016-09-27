@@ -279,9 +279,9 @@ class SomelineImageService
     }
 
     /**
-     * @param $image_templates
-     * @param $template_name
-     * @param $image_name
+     * @param $template_name The template to be used for showing
+     * @param $image_name The image name for showing
+     * @param $image_templates array Additional image templates, if same template exists, will be replaced
      * @param null $storage_path
      * @return mixed|\Symfony\Component\HttpFoundation\BinaryFileResponse
      */
@@ -289,7 +289,7 @@ class SomelineImageService
     {
         $cache_minutes = 60 * 24 * 15; // 15 days
         $storage_path = $storage_path ?: $this->storagePath();
-        $image_templates = !empty($image_templates) ? $image_templates : $this->getConfig('image_templates');
+        $image_templates = array_merge($this->getConfig('image_templates', []), $image_templates);
         $file_path = $storage_path . $image_name;
 
         // check exists
