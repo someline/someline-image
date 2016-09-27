@@ -110,11 +110,8 @@ class SomelineImageService
         $final_path_with_name = $storage_path . $final_file_name;
 
         // check directory
-        if (!File::exists(dirname($final_path_with_name))) {
-            $isMadeDir = mkdir(dirname($final_path_with_name), 0777, true);
-            if (!$isMadeDir) {
-                throw new StoreImageException('Failed to make dir: ' . dirname($final_path_with_name));
-            }
+        if (!self::autoCreateDirectory($final_path_with_name)) {
+            throw new StoreImageException('Failed to make dir: ' . dirname($final_path_with_name));
         }
 
         // save
@@ -204,7 +201,7 @@ class SomelineImageService
         $final_path_with_name = $storage_path . $final_file_name;
 
         // check directory
-        if (!SomelineFileService::autoCreateDirectory($final_path_with_name)) {
+        if (!self::autoCreateDirectory($final_path_with_name)) {
             throw new StoreImageException('Failed to make dir: ' . dirname($final_path_with_name));
         }
 
@@ -506,6 +503,23 @@ class SomelineImageService
             \Log::error("SomelineImageService: Unable to convert to image [" + (string)$e + "]");
             return null;
         }
+    }
+
+    /**
+     * auto create directory if not exists
+     * @param $path_name
+     * @return bool
+     */
+    public static function autoCreateDirectory($path_name)
+    {
+        // check directory
+        if (!File::exists(dirname($path_name))) {
+            $isMadeDir = mkdir(dirname($path_name), 0777, true);
+            if (!$isMadeDir) {
+                return false;
+            }
+        }
+        return true;
     }
 
 }
