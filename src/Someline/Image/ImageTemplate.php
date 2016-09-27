@@ -35,5 +35,81 @@ class ImageTemplate
         $this->download = $download;
     }
 
+    /**
+     * @return int
+     */
+    public function getWidth(): int
+    {
+        return $this->width;
+    }
+
+    /**
+     * @return int
+     */
+    public function getHeight(): int
+    {
+        return $this->height;
+    }
+
+    /**
+     * @return boolean
+     */
+    public function isRatio(): bool
+    {
+        return $this->ratio;
+    }
+
+    /**
+     * @return boolean
+     */
+    public function isDownload(): bool
+    {
+        return $this->download;
+    }
+
+    /**
+     * @return array
+     */
+    public function getOptions(): array
+    {
+        return $this->options;
+    }
+
+    /**
+     * @param $name
+     * @return mixed|null
+     */
+    public function getOption($name)
+    {
+        if (isset($this->options[$name])) {
+            return $this->options[$name];
+        } else {
+            return null;
+        }
+    }
+
+    /**
+     * @return bool
+     */
+    public function isWiden(): bool
+    {
+        return $this->width > 0 && $this->height == 0;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isHeighten(): bool
+    {
+        return $this->width == 0 && $this->height > 0;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isResize(): bool
+    {
+        return $this->width > 0 && $this->height > 0;
+    }
 
 }
