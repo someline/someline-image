@@ -1,14 +1,12 @@
-# Someline Rest API Client
+# Someline Image Service
 
-[![Latest Version](https://img.shields.io/github/release/someline/rest-api-client.svg?style=flat-square)](https://github.com/someline/rest-api-client/releases)
+[![Latest Version](https://img.shields.io/github/release/someline/someline-image.svg?style=flat-square)](https://github.com/someline/someline-image/releases)
 [![Software License](https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat-square)](LICENSE.md)
-[![Total Downloads](https://img.shields.io/packagist/dt/someline/rest-api-client.svg?style=flat-square)](https://packagist.org/packages/someline/rest-api-client)
+[![Total Downloads](https://img.shields.io/packagist/dt/someline/someline-image.svg?style=flat-square)](https://packagist.org/packages/someline/someline-image)
 
-Someline Starter API Client is an elegant and smart Rest API Client with OAuth2 authentication support. 
+Someline Image is a helper service to handle uploaded images and store images without duplicates. 
 
 Build for Laravel and [Someline Starter](https://starter.someline.com). 
-
-It can be used for accessing APIs created using [Someline Starter](https://starter.someline.com) framework.
 
 ## Install
 
@@ -17,7 +15,7 @@ It can be used for accessing APIs created using [Someline Starter](https://start
 Install composer package to your laravel project
 
 ``` bash
-composer require someline/rest-api-client
+composer require someline/someline-image
 ```
 
 Add Service Provider to `config/app.php`
@@ -25,7 +23,7 @@ Add Service Provider to `config/app.php`
 ``` php
     'providers' => [
         ...
-        Someline\Rest\RestClientServiceProvider::class,
+        Someline\Image\SomelineImageServiceProvider::class,
         ...
     ],
 ```
@@ -36,28 +34,12 @@ Publishing config file.
 php artisan vendor:publish
 ```
 
-After published, config file for Rest Client is `config/rest-client.php`, you will need to config it to use Rest Client.
+After published, config file for Rest Client is `config/someline-image.php`, you will need to config it to use Rest Client.
 
 ## Usage
 
 ``` php
-$restClient = new \Someline\Rest\RestClient('someline-starter');
 
-$restClient->setOAuthUserCredentials([
-    'username' => 'libern@someline.com',
-    'password' => 'Abc12345',
-]);
-$restClient->withOAuthTokenTypeUser();
-
-$response = $restClient->get("users")->getResponse();
-if (!$restClient->isResponseStatusCode(200)) {
-    $restClient->printResponseOriginContent();
-    $responseMessage = $restClient->getResponseMessage();
-    print_r($responseMessage);
-} else {
-    $responseData = $restClient->getResponseData();
-    print_r($responseData);
-}
 ```
 
 ## Testing
@@ -68,12 +50,13 @@ phpunit
 
 ## Contributing
 
-Please see [CONTRIBUTING](https://github.com/someline/rest-api-client/blob/master/CONTRIBUTING.md) for details.
+Please see [CONTRIBUTING](https://github.com/someline/someline-image/blob/master/CONTRIBUTING.md) for details.
 
 ## Credits
 
-- [Someline](https://github.com/libern)
-- [All Contributors](https://github.com/someline/rest-api-client/contributors)
+- [Libern](https://github.com/libern)
+- [Someline](https://github.com/someline)
+- [All Contributors](https://github.com/someline/someline-image/contributors)
 
 ## License
 
