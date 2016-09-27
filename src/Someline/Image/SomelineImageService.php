@@ -8,7 +8,6 @@ use Someline\Image\Exception\StoreImageException;
 use Someline\Image\Models\SomelineImage;
 use Someline\Image\Models\SomelineImageHash;
 use Storage;
-use Symfony\Component\HttpFoundation\FileStoreImageException\FileNotFoundException;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Validator;
 
@@ -37,7 +36,7 @@ class SomelineImageService
      * @param UploadedFile $file
      * @param string $additionValidatorRule
      * @param bool $isAllowGIF
-     * @return false|SomelineImage|null
+     * @return SomelineImage
      * @throws StoreImageException
      */
     public function handleUploadedFile(UploadedFile $file, $additionValidatorRule = '', $isAllowGIF = false)
@@ -68,7 +67,7 @@ class SomelineImageService
      * @param $path_with_name
      * @param null $file_extension
      * @param bool $isAllowGIF
-     * @return SomelineImage|null
+     * @return SomelineImage
      * @throws StoreImageException
      */
     public function storeImageFromPath($path_with_name, $file_extension = null, $isAllowGIF = false)
@@ -80,7 +79,7 @@ class SomelineImageService
 
 
         if (!File::exists($path_with_name)) {
-            throw new FileNotFoundException($path_with_name);
+            throw new StoreImageException("File not foud: " . $path_with_name);
         }
 
         // read exif info
@@ -156,6 +155,10 @@ class SomelineImageService
                 $file_sha1, $final_file_sha1);
         }
 
+        if (!$someline_image) {
+            throw new StoreImageException('Failed to store image.');
+        }
+
         return $someline_image;
     }
 
@@ -175,7 +178,7 @@ class SomelineImageService
      * @param $source
      * @param $file_sha1
      * @param $exif
-     * @return SomelineImage|null
+     * @return SomelineImage
      * @throws StoreImageException
      */
     public function storeImageFromMake($source, $file_sha1, $exif)
@@ -230,6 +233,10 @@ class SomelineImageService
             $someline_image = $this->saveImageInfo($isSimilarExists, $someline_image_hash,
                 $final_file_name, $is_allowed_animated_gif, $final_file_size, $image, $exif,
                 $file_sha1, $final_file_sha1);
+        }
+
+        if (!$someline_image) {
+            throw new StoreImageException('Failed to store image.');
         }
 
         return $someline_image;
