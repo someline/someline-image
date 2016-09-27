@@ -3,10 +3,11 @@
 use Carbon\Carbon;
 use File;
 use Image;
+use Someline\Image\Exception\SomelineImageException;
+use Someline\Image\Exception\StoreImageException;
 use Someline\Image\Models\SomelineImage;
 use Someline\Image\Models\SomelineImageHash;
 use Storage;
-use StoreImageException;
 use Symfony\Component\HttpFoundation\FileStoreImageException\FileNotFoundException;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Validator;
@@ -278,17 +279,17 @@ class SomelineImageService
     }
 
     /**
-     * @param $image_type_templates
-     * @param $image_type
+     * @param $image_templates
+     * @param $template_name
      * @param $image_name
      * @param null $storage_path
-     * @param array $image_options
      * @return mixed|\Symfony\Component\HttpFoundation\BinaryFileResponse
      */
-    public function showImage($image_type_templates, $image_type, $image_name, $storage_path = null, $image_options = [])
+    public function showImage($template_name, $image_name, array $image_templates = [], $storage_path = null)
     {
         $cache_minutes = 60 * 24 * 15; // 15 days
         $storage_path = $storage_path ?: $this->storagePath();
+        $image_templates = !empty($image_templates) ? $image_templates : $this->getConfig('image_templates');
         $file_path = $storage_path . $image_name;
 
         // check exists
@@ -297,51 +298,61 @@ class SomelineImageService
             abort(404);
         }
 
+        // if is invalid type
+        if (!isset($image_templates[$template_name])) {
+            throw new SomelineImageException('Invalid template name supplied.');
+        }
+
+        /** @var ImageTemplate $imageTemplate */
+        $imageTemplate = $image_templates[$template_name];
+
         // if download
-        if ($image_type == 'download' && isset($image_type_templates[$image_type])) {
+        if ($imageTemplate->isDownload()) {
             return response()->download($file_path);
         }
 
-
-        // invalid type
-        if (!isset($image_type_templates[$image_type])) {
-            abort(404);
-        }
-        $image_size = $image_type_templates[$image_type];
-
         // convert to image
-        $img = Image::cache(function ($image) use ($file_path, $image_size, $image_type, $image_options) {
+        $img = Image::cache(function ($image) use ($file_path, $imageTemplate) {
             /** @var \Intervention\Image\Image $image */
             $image->make($file_path);
 
-            if ($image_size !== false) {
-                if ($image_size[0] == 0) { // e.g. [0, 500]: heighten to 500, and keep ratio
-                    $image->heighten($image_size[1], function ($constraint) {
-                        $constraint->aspectRatio();
+            // resize
+            if (!$imageTemplate->isOriginal()) {
+                if ($imageTemplate->isHeighten()) {
+                    $image->heighten($imageTemplate->getHeight(), function ($constraint) use ($imageTemplate) {
+                        if ($imageTemplate->isRatio()) {
+                            $constraint->aspectRatio();
+                        }
                         $constraint->upsize();
                     });
-                } elseif ($image_size[1] == 0) { // e.g. [500, 0]: widen to 500, and keep ratio
-                    $image->widen($image_size[0], function ($constraint) {
-                        $constraint->aspectRatio();
+                } elseif ($imageTemplate->isWiden()) {
+                    $image->widen($imageTemplate->getWidth(), function ($constraint) use ($imageTemplate) {
+                        if ($imageTemplate->isRatio()) {
+                            $constraint->aspectRatio();
+                        }
                         $constraint->upsize();
                     });
-                } elseif (isset($image_size[2])) { // e.g. [500, 500, true]: resize to 500 x 500, and keep ratio
+                } elseif ($imageTemplate->isResize()) {
                     // remain aspect ratio and to its largest possible
-                    $image->resize($image_size[0], $image_size[1], function ($constraint) {
-                        $constraint->aspectRatio();
-                        $constraint->upsize();
-                    });
-                } else {
-                    $image->fit($image_size[0], $image_size[1]);
+                    if ($imageTemplate->isFit()) {
+                        $image->fit($imageTemplate->getWidth(), $imageTemplate->getHeight());
+                    } else {
+                        $image->resize($imageTemplate->getWidth(), $imageTemplate->getHeight(),
+                            function ($constraint) use ($imageTemplate) {
+                                if ($imageTemplate->isRatio()) {
+                                    $constraint->aspectRatio();
+                                }
+                                $constraint->upsize();
+                            });
+                    }
                 }
             }
 
-            if (!empty($image_options)) {
-                if (!empty($image_options['blur'])) {
-                    $options = $image_options['blur'];
-                    $amount = $options['amount'];
-                    $image->blur($amount);
-                }
+            // blur
+            $blur_option = $imageTemplate->getOption('blur');
+            if (!empty($blur_option)) {
+                $amount = $blur_option['amount'];
+                $image->blur($amount);
             }
 
         }, $cache_minutes, true);

@@ -19,11 +19,25 @@ class SomelineImage extends BaseModel
         'updated_at', 'updated_by', 'updated_ip',
     ];
 
+    /**
+     * @return Int
+     */
     public function getSomelineImageId()
     {
         return $this->someline_image_id;
     }
 
+    /**
+     * @return string
+     */
+    public function getImageName()
+    {
+        return $this->image_name;
+    }
+
+    /**
+     * @return null|string
+     */
     public function getImageUrl()
     {
         if ($this->file_size > 0) {

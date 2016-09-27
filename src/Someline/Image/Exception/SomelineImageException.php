@@ -2,7 +2,7 @@
 
 use RuntimeException;
 
-class StoreImageException extends RuntimeException
+class SomelineImageException extends RuntimeException
 {
 
 }
