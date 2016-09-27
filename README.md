@@ -38,8 +38,56 @@ After published, config file for Rest Client is `config/someline-image.php`, you
 
 ## Usage
 
-``` php
+##### Routes
 
+``` php
+Route::get('/image/{name}', 'ImageController@showOriginalImage');
+Route::post('/image', 'ImageController@postImage');
+```
+
+##### Sample Controller File
+
+`app/Http/Controllers/ImageController.php`
+
+``` php
+<?php namespace App\Http\Controllers;
+
+use Exception;
+use Illuminate\Http\Request;
+use Someline\Image\Controllers\SomelineImageController;
+use Someline\Image\Models\SomelineImage;
+use Someline\Image\SomelineImageService;
+
+class ImageController extends Controller
+{
+
+    public function postImage(Request $request)
+    {
+        $somelineImageService = new SomelineImageService();
+        $file = $request->file('image');
+
+        $somelineImage = null;
+        try {
+            /** @var SomelineImage $somelineImage */
+            $somelineImage = $somelineImageService->handleUploadedFile($file);
+        } catch (Exception $e) {
+            return 'Failed to save: ' . $e->getMessage();
+        }
+
+        if (!$somelineImage) {
+            return 'Failed to save uploaded image.';
+        }
+
+        $somelineImageId = $somelineImage->getSomelineImageId();
+        return 'Saved: ' . $somelineImage->getImageUrl();
+    }
+
+    public function showOriginalImage($image_name)
+    {
+        return SomelineImageController::showImage('original', $image_name);
+    }
+
+}
 ```
 
 ## Testing
