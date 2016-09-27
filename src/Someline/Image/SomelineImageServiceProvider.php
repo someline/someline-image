@@ -15,6 +15,7 @@ class SomelineImageServiceProvider extends ServiceProvider
      */
     public function boot()
     {
+        $this->loadMigrationsFrom(__DIR__ . '/../../migrations');
         $this->publishes([
             __DIR__ . '/../../config/config.php' => config_path('someline-image.php'),
         ]);
