@@ -424,8 +424,8 @@ class SomelineImageService
         $image->save($final_path_with_name, $image_quality);
         $final_file_sha1 = sha1_file($final_path_with_name);
         $final_file_size = filesize($final_path_with_name);
-        $isExists = File::exists($final_path_with_name);
-        return $isExists;
+        $isSaved = File::exists($final_path_with_name);
+        return $isSaved;
     }
 
     /**
