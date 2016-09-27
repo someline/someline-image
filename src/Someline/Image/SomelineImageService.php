@@ -6,7 +6,8 @@ use Image;
 use Someline\Image\Models\SomelineImage;
 use Someline\Image\Models\SomelineImageHash;
 use Storage;
-use Symfony\Component\HttpFoundation\File\Exception\FileNotFoundException;
+use StoreImageException;
+use Symfony\Component\HttpFoundation\FileStoreImageException\FileNotFoundException;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Validator;
 
@@ -14,11 +15,21 @@ class SomelineImageService
 {
 
     /**
+     * @param $key
+     * @param null $default
+     * @return mixed
+     */
+    public function getConfig($key, $default = null)
+    {
+        return config("someline-image.$key", $default);
+    }
+
+    /**
      * @return string
      */
     private function storagePath()
     {
-        return storage_path('app/images/original/');
+        return $this->getConfig('storage_path');
     }
 
     /**
@@ -26,13 +37,13 @@ class SomelineImageService
      * @param string $additionValidatorRule
      * @param bool $isAllowGIF
      * @return false|SomelineImage|null
-     * @throws \Exception
+     * @throws StoreImageException
      */
     public function handleUploadedFile(UploadedFile $file, $additionValidatorRule = '', $isAllowGIF = false)
     {
         // check valid
         if (!$file->isValid()) {
-            throw new \Exception($file->getErrorMessage());
+            throw new StoreImageException($file->getErrorMessage());
         }
 
         // validate image
@@ -43,14 +54,13 @@ class SomelineImageService
             'image' => 'required|mimes:jpg,jpeg,bmp,png' . $mimes . '|max:12829' . $additionValidatorRule,
         ]);
         if ($validator->fails()) {
-            throw new \Exception($validator->errors()->first());
+            throw new StoreImageException($validator->errors()->first());
         }
 
         // file info
         $path_with_name = $file->getPathname();
         $file_extension = $file->getClientOriginalExtension();
         return $this->storeImageFromPath($path_with_name, $file_extension, $isAllowGIF);
-
     }
 
     /**
@@ -58,7 +68,7 @@ class SomelineImageService
      * @param null $file_extension
      * @param bool $isAllowGIF
      * @return SomelineImage|null
-     * @throws \Exception
+     * @throws StoreImageException
      */
     public function storeImageFromPath($path_with_name, $file_extension = null, $isAllowGIF = false)
     {
@@ -92,7 +102,7 @@ class SomelineImageService
         $file_sha1 = sha1_file($path_with_name);
         $final_file_sha1 = null;
         if ($file_sha1 === FALSE) {
-            throw new \Exception('Failed to create SHA1 for file: ' . $path_with_name);
+            throw new StoreImageException('Failed to create SHA1 for file: ' . $path_with_name);
         }
 
         // final
@@ -103,7 +113,7 @@ class SomelineImageService
         if (!File::exists(dirname($final_path_with_name))) {
             $isMadeDir = mkdir(dirname($final_path_with_name), 0777, true);
             if (!$isMadeDir) {
-                throw new \Exception('Failed to make dir: ' . dirname($final_path_with_name));
+                throw new StoreImageException('Failed to make dir: ' . dirname($final_path_with_name));
             }
         }
 
@@ -126,7 +136,7 @@ class SomelineImageService
                 if (File::move($path_with_name, $final_path_with_name)) {
                     @chmod($final_path_with_name, 0666 & ~umask());
                 } else {
-                    throw new \Exception('Failed to move file to path: ' . $final_path_with_name);
+                    throw new StoreImageException('Failed to move file to path: ' . $final_path_with_name);
                 }
                 $final_file_sha1 = sha1_file($final_path_with_name);
                 $final_file_size = filesize($final_path_with_name);
@@ -165,14 +175,14 @@ class SomelineImageService
      * @param $file_sha1
      * @param $exif
      * @return SomelineImage|null
-     * @throws \Exception
+     * @throws StoreImageException
      */
     public function storeImageFromMake($source, $file_sha1, $exif)
     {
         try {
             $image = Image::make($source);
-        } catch (\Exception $e) {
-            throw new \Exception("SomelineImageService: Unable to make image [" + (string)$e + "]");
+        } catch (StoreImageException $e) {
+            throw new StoreImageException("SomelineImageService: Unable to make image [" + (string)$e + "]");
         }
 
         $is_allowed_animated_gif = false;
@@ -182,7 +192,7 @@ class SomelineImageService
         $storage_path = $this->storagePath();
         $final_file_sha1 = null;
         if ($file_sha1 === FALSE || strlen($file_sha1) != 40) {
-            throw new \Exception('Invalid SHA1 for file.');
+            throw new StoreImageException('Invalid SHA1 for file.');
         }
 
         // final
@@ -191,7 +201,7 @@ class SomelineImageService
 
         // check directory
         if (!SomelineFileService::autoCreateDirectory($final_path_with_name)) {
-            throw new \Exception('Failed to make dir: ' . dirname($final_path_with_name));
+            throw new StoreImageException('Failed to make dir: ' . dirname($final_path_with_name));
         }
 
         // save
@@ -230,20 +240,20 @@ class SomelineImageService
      */
     public function isAnimatedGif($filename)
     {
-        $filecontents = file_get_contents($filename);
+        $file_contents = file_get_contents($filename);
 
         $str_loc = 0;
         $count = 0;
 
         // There is no point in continuing after we find a 2nd frame
         while ($count < 2) {
-            $where1 = strpos($filecontents, "\x00\x21\xF9\x04", $str_loc);
+            $where1 = strpos($file_contents, "\x00\x21\xF9\x04", $str_loc);
             if ($where1 === FALSE) {
                 break;
             }
 
             $str_loc = $where1 + 1;
-            $where2 = strpos($filecontents, "\x00\x2C", $str_loc);
+            $where2 = strpos($file_contents, "\x00\x2C", $str_loc);
             if ($where2 === FALSE) {
                 break;
             } else {
@@ -300,7 +310,6 @@ class SomelineImageService
         $image_size = $image_type_templates[$image_type];
 
         // convert to image
-
         $img = Image::cache(function ($image) use ($file_path, $image_size, $image_type, $image_options) {
             /** @var \Intervention\Image\Image $image */
             $image->make($file_path);
@@ -335,10 +344,6 @@ class SomelineImageService
                 }
             }
 
-            if ($image_type == 'external') {
-                // add water mark
-                $image->insert(public_path('images/logo/someline-watermark.png'), 'top-right', 10, 10);
-            }
         }, $cache_minutes, true);
 
 
@@ -479,7 +484,7 @@ class SomelineImageService
             $filteredData = substr($encodedData, strpos($encodedData, ",") + 1);
             $image_data = base64_decode($filteredData);
             return $image_data;
-        } catch (\Exception $e) {
+        } catch (StoreImageException $e) {
             \Log::error("SomelineImageService: Unable to convert to image [" + (string)$e + "]");
             return null;
         }
