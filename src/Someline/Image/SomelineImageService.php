@@ -33,6 +33,22 @@ class SomelineImageService
     }
 
     /**
+     * @return int
+     */
+    private function defaultQuality()
+    {
+        return (int)$this->getConfig('default_quality', 75);
+    }
+
+    /**
+     * @return int
+     */
+    private function largeImageQuality()
+    {
+        return (int)$this->getConfig('large_image_quality', 65);
+    }
+
+    /**
      * @param UploadedFile $file
      * @param string $additionValidatorRule
      * @param bool $isAllowGIF
@@ -406,7 +422,7 @@ class SomelineImageService
         $image_file_size_kb = $file_origin_size / 1024;
 
         // default quality 75
-        $image_quality = 75;
+        $image_quality = $this->defaultQuality();
 
         // higher quality for small images
         if ($image_file_size_kb < 500) {
@@ -415,7 +431,8 @@ class SomelineImageService
 
         // higher compression for large size images, 2000kb
         if ($image_file_size_kb > 2000) {
-            $image_quality = 65;
+            // quality 65
+            $image_quality = $this->largeImageQuality();
         }
 
         // reduce dimension to max 5000px
