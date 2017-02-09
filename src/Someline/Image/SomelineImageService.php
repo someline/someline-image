@@ -52,10 +52,10 @@ class SomelineImageService
      * @param UploadedFile $file
      * @param string $additionValidatorRule
      * @param bool $isAllowGIF
+     * @param int $maxSizeAllowed
      * @return SomelineImage
-     * @throws StoreImageException
      */
-    public function handleUploadedFile(UploadedFile $file, $additionValidatorRule = '', $isAllowGIF = false)
+    public function handleUploadedFile(UploadedFile $file, $additionValidatorRule = '', $isAllowGIF = false, $maxSizeAllowed = 12829)
     {
         // check valid
         if (!$file->isValid()) {
@@ -67,7 +67,7 @@ class SomelineImageService
         $mimes = $isAllowGIF ? ',gif' : '';
         /** @var Validator $validator */
         $validator = Validator::make(['image' => $file], [
-            'image' => 'required|mimes:jpg,jpeg,bmp,png' . $mimes . '|max:12829' . $additionValidatorRule,
+            'image' => 'required|mimes:jpg,jpeg,bmp,png' . $mimes . '|max:' . $maxSizeAllowed . $additionValidatorRule,
         ]);
         if ($validator->fails()) {
             throw new StoreImageException($validator->errors()->first());
