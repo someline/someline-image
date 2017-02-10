@@ -39,6 +39,16 @@ class ImageTemplate
         $this->download = $download;
     }
 
+    public static function __set_state($data)
+    {
+        $imageTemplate = new ImageTemplate($data['width'], $data['height']);
+        $imageTemplate->fit = $data['fit'];
+        $imageTemplate->ratio = $data['ratio'];
+        $imageTemplate->options = $data['options'];
+        $imageTemplate->download = $data['download'];
+        return $imageTemplate;
+    }
+
     /**
      * @return int
      */
