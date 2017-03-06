@@ -539,4 +539,19 @@ class SomelineImageService
         return true;
     }
 
+    /**
+     * @param integer $someline_image_id
+     * @return \Intervention\Image\Image
+     */
+    public static function getImageFromSomelineImageId($someline_image_id)
+    {
+        $someline_image = SomelineImage::find($someline_image_id);
+        if (is_null($someline_image)) {
+            throw new SomelineImageException('Someline image record not found!');
+        }
+        $imageManager = new ImageManager(config('image'));
+        $background_image = $imageManager->make($someline_image->getImagePath());
+        return $background_image;
+    }
+
 }
