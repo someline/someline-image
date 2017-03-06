@@ -47,4 +47,10 @@ class SomelineImage extends BaseModel
         }
     }
 
+    public function getImagePath()
+    {
+        $storage_path = config("someline-image.storage_path");
+        return $storage_path . $this->image_name;
+    }
+
 }
