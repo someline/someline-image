@@ -1,4 +1,6 @@
-<?php namespace Someline\Image;
+<?php
+
+namespace Someline\Image;
 
 use Carbon\Carbon;
 use File;

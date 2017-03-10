@@ -1,4 +1,6 @@
-<?php namespace Someline\Image\Exception;
+<?php
+
+namespace Someline\Image\Exception;
 
 use RuntimeException;
 

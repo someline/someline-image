@@ -1,6 +1,6 @@
 <?php
 
-namespace Someline\Component\Category\Models\Traits;
+namespace Someline\Image\Models\Traits;
 
 use Someline\Image\Models\SomelineImage;
 
