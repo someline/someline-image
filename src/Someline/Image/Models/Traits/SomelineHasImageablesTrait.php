@@ -1,0 +1,107 @@
+<?php
+
+namespace Someline\Image\Models\Traits;
+
+use Illuminate\Database\Eloquent\Relations\MorphToMany;
+use Someline\Image\Models\SomelineImage;
+
+trait SomelineHasImageablesTrait
+{
+
+    /**
+     * @return mixed|MorphToMany
+     */
+    public function images()
+    {
+        return $this->morphToMany(SomelineImage::class, 'imageable', 'someline_imageables', null, 'someline_image_id')
+            ->withPivot('is_main', 'type', 'data');
+    }
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+     */
+    public function main_images()
+    {
+        return $this->images()->wherePivot('is_main', '=', 1);
+    }
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+     */
+    public function type_images($type)
+    {
+        return $this->images()->wherePivot('type', '=', $type);
+    }
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+     */
+    public function type_main_images($type)
+    {
+        return $this->main_images()->wherePivot('type', '=', $type);
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getImages()
+    {
+        return $this->images;
+    }
+
+    /**
+     * @return mixed|null
+     */
+    public function getMainImage()
+    {
+        return $this->main_images()->first();
+    }
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    public function getMainImages()
+    {
+        return $this->main_images()->get();
+    }
+
+    /**
+     * @param $type
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    public function getTypeImages($type)
+    {
+        return $this->type_images($type)->get();
+    }
+
+    /**
+     * @param $type
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    public function getTypeMainImages($type)
+    {
+        return $this->type_main_images($type)->get();
+    }
+
+    /**
+     * @param SomelineImage $somelineImage
+     * @return int
+     */
+    public function setAsMainImage(SomelineImage $somelineImage)
+    {
+        $this->images()->rawUpdate(['is_main' => false]);
+        return $this->images()->updateExistingPivot($somelineImage->getKey(), ['is_main' => true]);
+    }
+
+    /**
+     * @param string $type
+     * @param SomelineImage $somelineImage
+     * @return int
+     */
+    public function setAsTypeMainImage($type, SomelineImage $somelineImage)
+    {
+        $this->type_images($type)->rawUpdate(['is_main' => false]);
+        return $this->type_images($type)->updateExistingPivot($somelineImage->getKey(), ['is_main' => true]);
+    }
+
+}

@@ -20,6 +20,8 @@ class CreateSomelineImageablesTable extends Migration
             // Adding more table related fields here...
             $table->morphs('imageable', 'someline_imageable_index');
             $table->unsignedInteger('someline_image_id')->index();
+            $table->boolean('is_main')->default(false);
+            $table->string('type')->nullable();
             $table->json('data')->nullable();
 
 //            $table->unsignedInteger('created_by')->nullable();
