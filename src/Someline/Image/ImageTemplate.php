@@ -1,4 +1,6 @@
-<?php namespace Someline\Image;
+<?php
+
+namespace Someline\Image;
 
 class ImageTemplate
 {

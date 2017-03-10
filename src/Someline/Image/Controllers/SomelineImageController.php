@@ -1,4 +1,6 @@
-<?php namespace Someline\Image\Controllers;
+<?php
+
+namespace Someline\Image\Controllers;
 
 use Illuminate\Routing\Controller as BaseController;
 use Someline\Image\SomelineImageService;

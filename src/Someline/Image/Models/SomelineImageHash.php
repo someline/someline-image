@@ -1,4 +1,6 @@
-<?php namespace Someline\Image\Models;
+<?php
+
+namespace Someline\Image\Models;
 
 use Someline\Base\Models\BaseModel;
 
