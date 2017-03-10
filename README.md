@@ -47,6 +47,13 @@ Route::post('/image', 'ImageController@postImage');
 
 ##### Many Imageables
 
+Use on the Model:
+```php
+    use SomelineHasImageablesTrait;
+```
+
+Usage:
+
 ``` php
 
 $somelineImage = SomelineImage::find(1);
