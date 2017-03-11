@@ -110,18 +110,30 @@ trait SomelineHasImageablesTrait
      */
     public function getImageUrls($withSomelineImageId = false)
     {
-        return $this->getTypeImageUrls('image_url', $withSomelineImageId);
+        return $this->getNamedImageUrls('image_url', $withSomelineImageId);
     }
 
     /**
-     * @param $typeImageUrlAttribute
+     * @param $imageUrlAttributeName
      * @param bool $withSomelineImageId
      * @return \Illuminate\Support\Collection
      */
-    public function getTypeImageUrls($typeImageUrlAttribute, $withSomelineImageId = false)
+    public function getNamedImageUrls($imageUrlAttributeName, $withSomelineImageId = false)
     {
         $key = $withSomelineImageId ? 'someline_image_id' : null;
-        return $this->getImages()->pluck($typeImageUrlAttribute, $key);
+        return $this->getImages()->pluck($imageUrlAttributeName, $key);
+    }
+
+    /**
+     * @param $type
+     * @param $imageUrlAttributeName
+     * @param bool $withSomelineImageId
+     * @return \Illuminate\Support\Collection
+     */
+    public function getTypeNamedImageUrls($type, $imageUrlAttributeName, $withSomelineImageId = false)
+    {
+        $key = $withSomelineImageId ? 'someline_image_id' : null;
+        return $this->getTypeImages($type)->pluck($imageUrlAttributeName, $key);
     }
 
 }
