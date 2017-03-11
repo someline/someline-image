@@ -3,10 +3,16 @@
 namespace Someline\Image\Models;
 
 
+use Prettus\Repository\Contracts\Presentable;
+use Prettus\Repository\Contracts\Transformable;
+use Prettus\Repository\Traits\PresentableTrait;
 use Someline\Base\Models\BaseModel;
+use Someline\Image\Models\Traits\SomelinePivotTrait;
 
-class SomelineImageBase extends BaseModel
+class SomelineImageBase extends BaseModel implements Transformable, Presentable
 {
+    use SomelinePivotTrait;
+    use PresentableTrait;
 
     protected $table = 'someline_images';
 
@@ -54,6 +60,14 @@ class SomelineImageBase extends BaseModel
     }
 
     /**
+     * @return null|string
+     */
+    public function getImageUrlAttribute()
+    {
+        return $this->getImageUrl();
+    }
+
+    /**
      * @param $type
      * @return null|string
      */
@@ -84,6 +98,17 @@ class SomelineImageBase extends BaseModel
     {
         $storage_path = config("someline-image.storage_path");
         return $storage_path . $this->getImageName();
+    }
+
+    /**
+     * @return array
+     */
+    public function transform()
+    {
+        return [
+            'someline_image_id' => $this->getSomelineImageId(),
+            'image_name' => $this->getImageName(),
+        ];
     }
 
 }

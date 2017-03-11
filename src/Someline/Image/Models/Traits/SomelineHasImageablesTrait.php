@@ -42,7 +42,7 @@ trait SomelineHasImageablesTrait
     }
 
     /**
-     * @return mixed
+     * @return \Illuminate\Database\Eloquent\Collection
      */
     public function getImages()
     {
@@ -50,7 +50,7 @@ trait SomelineHasImageablesTrait
     }
 
     /**
-     * @return mixed|null
+     * @return SomelineImage|null
      */
     public function getMainImage()
     {
@@ -102,6 +102,26 @@ trait SomelineHasImageablesTrait
     {
         $this->type_images($type)->rawUpdate(['is_main' => false]);
         return $this->type_images($type)->updateExistingPivot($somelineImage->getKey(), ['is_main' => true]);
+    }
+
+    /**
+     * @param bool $withSomelineImageId
+     * @return \Illuminate\Support\Collection
+     */
+    public function getImageUrls($withSomelineImageId = false)
+    {
+        return $this->getTypeImageUrls('image_url', $withSomelineImageId);
+    }
+
+    /**
+     * @param $typeImageUrlAttribute
+     * @param bool $withSomelineImageId
+     * @return \Illuminate\Support\Collection
+     */
+    public function getTypeImageUrls($typeImageUrlAttribute, $withSomelineImageId = false)
+    {
+        $key = $withSomelineImageId ? 'someline_image_id' : null;
+        return $this->getImages()->pluck($typeImageUrlAttribute, $key);
     }
 
 }

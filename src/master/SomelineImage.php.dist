@@ -7,6 +7,23 @@ class SomelineImage extends SomelineImageBase
 {
 
     /**
+     * @return array
+     */
+    public function transform()
+    {
+        $data = parent::transform();
+        $data['image_url'] = $this->getImageUrl();
+
+        if ($this->hasPivot()) {
+            $parent = $this->getPivotParent();
+//            if ($parent instanceof SomelineProduct) {
+//                $data['product_image_url'] = $this->getProductImageUrlAttribute();
+//            }
+        }
+        return $data;
+    }
+
+    /**
      * @param null $type
      * @return null|string
      */
