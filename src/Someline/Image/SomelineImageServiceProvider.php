@@ -18,6 +18,10 @@ class SomelineImageServiceProvider extends ServiceProvider
         $this->loadMigrationsFrom(__DIR__ . '/../../migrations');
         $this->publishes([
             __DIR__ . '/../../config/config.php' => config_path('someline-image.php'),
+
+            // master files
+            __DIR__ . '/../../master/SomelineImage.php.dist' => app_path('Models/Image/SomelineImage.php'),
+
         ]);
     }
 

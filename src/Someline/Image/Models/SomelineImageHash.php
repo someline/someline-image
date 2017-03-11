@@ -3,6 +3,7 @@
 namespace Someline\Image\Models;
 
 use Someline\Base\Models\BaseModel;
+use Someline\Models\Image\SomelineImage;
 
 class SomelineImageHash extends BaseModel
 {
@@ -15,6 +16,9 @@ class SomelineImageHash extends BaseModel
 
     protected $hidden = [];
 
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
     public function image()
     {
         return $this->belongsTo(SomelineImage::class, 'someline_image_id', 'someline_image_id');

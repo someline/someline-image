@@ -5,7 +5,7 @@ namespace Someline\Image\Models;
 
 use Someline\Base\Models\BaseModel;
 
-class SomelineImage extends BaseModel
+class SomelineImageBase extends BaseModel
 {
 
     protected $table = 'someline_images';
@@ -38,21 +38,52 @@ class SomelineImage extends BaseModel
     }
 
     /**
+     * @return bool
+     */
+    public function isValid()
+    {
+        return $this->file_size > 0;
+    }
+
+    /**
      * @return null|string
      */
     public function getImageUrl()
     {
-        if ($this->file_size > 0) {
-            return url('/image/' . $this->image_name);
+        return $this->getTypeImageUrl();
+    }
+
+    /**
+     * @param $type
+     * @return null|string
+     */
+    public function getTypeImageUrl($type = null)
+    {
+        $type = $type ? $type . '/' : null;
+
+        if ($this->isValid()) {
+            return url('/image/' . $type . $this->getImageName());
         } else {
-            return null;
+            return $this->getDefaultImageUrl($type = null);
         }
     }
 
+    /**
+     * @param null $type
+     * @return null|string
+     */
+    public function getDefaultImageUrl($type = null)
+    {
+        return null;
+    }
+
+    /**
+     * @return string
+     */
     public function getImagePath()
     {
         $storage_path = config("someline-image.storage_path");
-        return $storage_path . $this->image_name;
+        return $storage_path . $this->getImageName();
     }
 
 }

@@ -3,7 +3,7 @@
 namespace Someline\Image\Models\Traits;
 
 use Illuminate\Database\Eloquent\Relations\MorphToMany;
-use Someline\Image\Models\SomelineImage;
+use Someline\Models\Image\SomelineImage;
 
 trait SomelineHasImageablesTrait
 {

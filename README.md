@@ -38,14 +38,14 @@ After published, config file for Rest Client is `config/someline-image.php`, you
 
 ## Usage
 
-##### Routes
+#### Routes
 
 ``` php
 Route::get('/image/{name}', 'ImageController@showOriginalImage');
 Route::post('/image', 'ImageController@postImage');
 ```
 
-##### Many Imageables
+#### Many Imageables
 
 Use on the Model:
 ```php
@@ -56,6 +56,7 @@ Usage:
 
 ``` php
 
+/** @var SomelineImage $somelineImage */
 $somelineImage = SomelineImage::find(1);
 
 /** @var User $user */
@@ -93,7 +94,7 @@ print_r($user->getTypeMainImages('cover')->toArray());
 
 ```
 
-##### Sample Controller File
+#### Sample Controller File
 
 `app/Http/Controllers/ImageController.php`
 
@@ -103,7 +104,7 @@ print_r($user->getTypeMainImages('cover')->toArray());
 use Exception;
 use Illuminate\Http\Request;
 use Someline\Image\Controllers\SomelineImageController;
-use Someline\Image\Models\SomelineImage;
+use Someline\Models\Image\SomelineImage;
 use Someline\Image\SomelineImageService;
 
 class ImageController extends Controller

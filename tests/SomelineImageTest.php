@@ -1,9 +1,9 @@
 <?php
 
 use Someline\Image\ImageTemplate;
-use Someline\Image\Models\SomelineImage;
 use Someline\Image\SomelineImageService;
 use Someline\Models\Foundation\User;
+use Someline\Models\Image\SomelineImage;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 
 class SomelineImageTest extends TestCase
