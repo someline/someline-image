@@ -97,7 +97,7 @@ class SomelineImageService
 
 
         if (!File::exists($path_with_name)) {
-            throw new StoreImageException("File not foud: " . $path_with_name);
+            throw new StoreImageException("File not found: " . $path_with_name);
         }
 
         // read exif info
