@@ -108,7 +108,7 @@ class SomelineImageService
         $originWidth = $image->getWidth();
         $originHeight = $image->getHeight();
         $image_file_size_kb = $file_origin_size / 1024;
-        $is_allowed_animated_gif = $is_animated_gif && $image_file_size_kb < 3000 && $originWidth < 600 && $originHeight < 900;
+        $is_allowed_animated_gif = $is_animated_gif;
 
         // save as jpg
         $default_file_extension = 'jpg';
@@ -179,24 +179,27 @@ class SomelineImageService
 
     /**
      * @param $originImageEncodedData
+     * @param bool $isAllowGIF
      * @return null|SomelineImage
      */
-    public function storeImageFromURLEncodedImageData($originImageEncodedData)
+    public function storeImageFromURLEncodedImageData($originImageEncodedData, $isAllowGIF = false)
     {
         $exif = read_exif_data_safe($originImageEncodedData);
+        $is_gif = SomelineImageService::isDataURLEncodedImageGif($originImageEncodedData);
         $origin_image_data = SomelineImageService::convertDataURLEncodedToImageData($originImageEncodedData);
         $origin_image_sha1 = sha1($origin_image_data);
-        return $this->storeImageFromMake($origin_image_data, $origin_image_sha1, $exif);
+        return $this->storeImageFromMake($origin_image_data, $origin_image_sha1, $exif, $isAllowGIF, $is_gif);
     }
 
     /**
      * @param $source
      * @param $file_sha1
      * @param $exif
+     * @param bool $isAllowGIF
+     * @param bool $isGIF
      * @return SomelineImage
-     * @throws StoreImageException
      */
-    public function storeImageFromMake($source, $file_sha1, $exif)
+    public function storeImageFromMake($source, $file_sha1, $exif, $isAllowGIF = false, $isGIF = false)
     {
         try {
             $image = Image::make($source);
@@ -204,10 +207,14 @@ class SomelineImageService
             throw new StoreImageException("SomelineImageService: Unable to make image [" + (string)$e + "]");
         }
 
-        $is_allowed_animated_gif = false;
+        $is_allowed_animated_gif = $isAllowGIF && $isGIF;
 
         // save as jpg
         $default_file_extension = 'jpg';
+        // save as gif if is allowed
+        if ($isAllowGIF && $is_allowed_animated_gif) {
+            $default_file_extension = 'gif';
+        }
         $storage_path = $this->storagePath();
         $final_file_sha1 = null;
         if ($file_sha1 === FALSE || strlen($file_sha1) != 40) {
@@ -238,8 +245,19 @@ class SomelineImageService
         }
 
         if (!$isExists) {
-            $isExists = $this->saveImage($image, $exif,
-                $final_path_with_name, $final_file_sha1, $final_file_size);
+            if ($isAllowGIF && $is_allowed_animated_gif) {
+                if (file_put_contents($final_path_with_name, $source)) {
+                    @chmod($final_path_with_name, 0666 & ~umask());
+                } else {
+                    throw new StoreImageException('Failed to move file to path: ' . $final_path_with_name);
+                }
+                $final_file_sha1 = sha1_file($final_path_with_name);
+                $final_file_size = filesize($final_path_with_name);
+                $isExists = File::exists($final_path_with_name);
+            } else {
+                $isExists = $this->saveImage($image, $exif,
+                    $final_path_with_name, $final_file_sha1, $final_file_size);
+            }
         }
 
         // stored and save to database
@@ -521,6 +539,18 @@ class SomelineImageService
         } catch (StoreImageException $e) {
             \Log::error("SomelineImageService: Unable to convert to image [" + (string)$e + "]");
             return null;
+        }
+    }
+
+    public static function isDataURLEncodedImageGif($encodedData)
+    {
+        try {
+            $image_type = substr($encodedData, 0, strpos($encodedData, ","));
+            $is_gif = str_contains($image_type, 'gif');
+            return $is_gif;
+        } catch (StoreImageException $e) {
+            \Log::error("SomelineImageService: Unable to convert to image [" + (string)$e + "]");
+            return false;
         }
     }
 
