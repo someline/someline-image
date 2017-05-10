@@ -351,6 +351,15 @@ class SomelineImageService
             return response()->download($file_path);
         }
 
+        // if gif
+        if (str_contains($image_name, 'gif')) {
+            return response(file_get_contents($file_path), 200)
+                ->header('Content-Type', 'image/gif')
+                ->setPublic()
+                ->setMaxAge(604800)
+                ->setExpires(Carbon::now()->addDay(7));
+        }
+
         // convert to image
         $img = Image::cache(function ($image) use ($file_path, $imageTemplate) {
             /** @var \Intervention\Image\Image $image */
