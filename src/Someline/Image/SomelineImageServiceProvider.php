@@ -17,9 +17,11 @@ class SomelineImageServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        Relation::morphMap([
-            SomelineImage::MORPH_NAME => SomelineImage::class,
-        ]);
+        if (class_exists(SomelineImage::class)) {
+            Relation::morphMap([
+                SomelineImage::MORPH_NAME => SomelineImage::class,
+            ]);
+        }
         $this->loadMigrationsFrom(__DIR__ . '/../../migrations');
         $this->publishes([
             __DIR__ . '/../../config/config.php' => config_path('someline-image.php'),
