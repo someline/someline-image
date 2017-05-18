@@ -14,6 +14,8 @@ class SomelineImageBase extends BaseModel implements Transformable, Presentable
     use SomelinePivotTrait;
     use PresentableTrait;
 
+    const MORPH_NAME = 'SomelineImage';
+
     protected $table = 'someline_images';
 
     protected $primaryKey = 'someline_image_id';
