@@ -153,7 +153,7 @@ class SomelineImageService
 
         if (!$isExists) {
             if (($isAllowGIF && $is_allowed_animated_gif) || ($isStorePNG && $is_file_png)) {
-                if (File::move($path_with_name, $final_path_with_name)) {
+                if (File::copy($path_with_name, $final_path_with_name)) {
                     @chmod($final_path_with_name, 0666 & ~umask());
                 } else {
                     throw new StoreImageException('Failed to move file to path: ' . $final_path_with_name);
