@@ -55,9 +55,10 @@ class SomelineImageService
      * @param string $additionValidatorRule
      * @param bool $isAllowGIF
      * @param int $maxSizeAllowed
+     * @param bool $isStorePNG
      * @return SomelineImage
      */
-    public function handleUploadedFile(UploadedFile $file, $additionValidatorRule = '', $isAllowGIF = false, $maxSizeAllowed = 12829)
+    public function handleUploadedFile(UploadedFile $file, $additionValidatorRule = '', $isAllowGIF = false, $maxSizeAllowed = 12829, $isStorePNG = false)
     {
         // check valid
         if (!$file->isValid()) {
@@ -78,20 +79,21 @@ class SomelineImageService
         // file info
         $path_with_name = $file->getPathname();
         $file_extension = $file->getClientOriginalExtension();
-        return $this->storeImageFromPath($path_with_name, $file_extension, $isAllowGIF);
+        return $this->storeImageFromPath($path_with_name, $file_extension, $isAllowGIF, $isStorePNG);
     }
 
     /**
      * @param $path_with_name
      * @param null $file_extension
      * @param bool $isAllowGIF
-     * @return SomelineImage
-     * @throws StoreImageException
+     * @param bool $isStorePNG
+     * @return null|SomelineImage
      */
-    public function storeImageFromPath($path_with_name, $file_extension = null, $isAllowGIF = false)
+    public function storeImageFromPath($path_with_name, $file_extension = null, $isAllowGIF = false, $isStorePNG = false)
     {
         $file_extension = $file_extension ?: pathinfo($path_with_name, PATHINFO_EXTENSION);
         $is_file_gif = $file_extension == 'gif';
+        $is_file_png = $file_extension == 'png';
         $file_origin_size = filesize($path_with_name);
         $is_animated_gif = $is_file_gif && $this->isAnimatedGif($path_with_name);
 
@@ -115,6 +117,9 @@ class SomelineImageService
         // save as gif if is allowed
         if ($isAllowGIF && $is_allowed_animated_gif) {
             $default_file_extension = 'gif';
+        }
+        if ($isStorePNG && $is_file_png) {
+            $default_file_extension = 'png';
         }
         $storage_path = $this->storagePath();
         $file_sha1 = sha1_file($path_with_name);
@@ -147,7 +152,7 @@ class SomelineImageService
         }
 
         if (!$isExists) {
-            if ($isAllowGIF && $is_allowed_animated_gif) {
+            if (($isAllowGIF && $is_allowed_animated_gif) || ($isStorePNG && $is_file_png)) {
                 if (File::move($path_with_name, $final_path_with_name)) {
                     @chmod($final_path_with_name, 0666 & ~umask());
                 } else {
