@@ -28,13 +28,22 @@ trait SomelineHasOneImageTrait
      */
     public function getSomelineImageUrl()
     {
+        $somelineImageType = $this->getSomelineImageType();
+        return $this->getSomelineImageUrlForType($somelineImageType);
+    }
+
+    /**
+     * @param $type
+     * @return \Illuminate\Contracts\Routing\UrlGenerator|null|string
+     */
+    public function getSomelineImageUrlForType($type)
+    {
         $somelineImage = $this->getSomelineImage();
         if (!$somelineImage) {
             return $this->getSomelineImageDefaultUrl();
         }
-        $somelineImageType = $this->getSomelineImageType();
-        if (!empty($somelineImageType)) {
-            return $somelineImage->getTypeImageUrl($somelineImageType);
+        if (!empty($type)) {
+            return $somelineImage->getTypeImageUrl($type);
         } else {
             return $somelineImage->getImageUrl();
         }
