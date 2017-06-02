@@ -29,7 +29,7 @@ trait SomelineHasOneImageTrait
     public function getSomelineImageUrl()
     {
         $somelineImage = $this->getSomelineImage();
-        if ($somelineImage) {
+        if (!$somelineImage) {
             return $this->getSomelineImageDefaultUrl();
         }
         $somelineImageType = $this->getSomelineImageType();
