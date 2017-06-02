@@ -49,11 +49,11 @@ trait SomelineHasOneImageTrait
     }
 
     /**
-     * @return int
+     * @return int|null
      */
     public function getSomelineImageId()
     {
-        return (int)$this->someline_image_id;
+        return $this->someline_image_id;
     }
 
     /**
