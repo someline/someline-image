@@ -113,4 +113,17 @@ class SomelineImageBase extends BaseModel implements Transformable, Presentable
         ];
     }
 
+    /**
+     * @return array
+     */
+    public function toSimpleArray()
+    {
+        $somelineImage = $this;
+        return [
+            'someline_image_id' => $somelineImage->getSomelineImageId(),
+            'someline_image_url' => $somelineImage->getImageUrl(),
+            'thumbnail_image_url' => $somelineImage->getTypeImageUrl('thumbnail'),
+        ];
+    }
+
 }
