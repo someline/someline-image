@@ -62,11 +62,14 @@ $somelineImage = SomelineImage::find(1);
 /** @var User $user */
 $user = User::find(1);
 
+// save image relations smartly with sequence support (recommended)
+$user->syncImages([1, 2], ['type' => 'cover', 'data' => json_encode('a')]);
+
 // save image relations via save
 $user->images()->save($somelineImage, ['type' => 'cover', 'data' => json_encode('a')]);
 
 // save image relations via attach
-$user->images()->attach([1], ['type' => 'cover', 'data' => json_encode('a')]);
+$user->images()->attach(1, ['type' => 'cover', 'data' => json_encode('a')]);
 
 // update image relations via sync
 $user->images()->sync([1]);
