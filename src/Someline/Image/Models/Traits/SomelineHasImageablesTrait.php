@@ -14,7 +14,8 @@ trait SomelineHasImageablesTrait
     public function images()
     {
         return $this->morphToMany(SomelineImage::class, 'imageable', 'someline_imageables', null, 'someline_image_id')
-            ->withPivot('is_main', 'type', 'data');
+            ->withPivot('sequence', 'is_main', 'type', 'data')
+            ->orderBy('sequence', 'asc');
     }
 
     /**
@@ -39,6 +40,20 @@ trait SomelineHasImageablesTrait
     public function type_main_images($type)
     {
         return $this->main_images()->wherePivot('type', '=', $type);
+    }
+
+    /**
+     * @param $someline_image_ids
+     * @param array $data
+     */
+    public function syncImages($someline_image_ids, $data = [])
+    {
+        $this->images()->detach();
+        foreach ($someline_image_ids as $sequence => $someline_image_id) {
+            $this->images()->attach($someline_image_id, array_merge([
+                'sequence' => $sequence,
+            ], $data));
+        }
     }
 
     /**
