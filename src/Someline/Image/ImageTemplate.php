@@ -144,4 +144,12 @@ class ImageTemplate
         return $this->width == 0 && $this->height == 0;
     }
 
+    /**
+     * @return bool
+     */
+    public function isEmptyOptions()
+    {
+        return empty($this->options);
+    }
+
 }

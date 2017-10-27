@@ -368,63 +368,66 @@ class SomelineImageService
             return response()->download($file_path);
         }
 
-        // if gif
-        if (str_contains($image_name, 'gif')) {
-            return response(file_get_contents($file_path), 200)
-                ->header('Content-Type', 'image/gif')
-                ->setPublic()
-                ->setMaxAge(604800)
-                ->setExpires(Carbon::now()->addDay(7));
-        }
+        $file = File::get($file_path);
+        $type = File::mimeType($file_path);
 
-        // convert to image
-        $img = Image::cache(function ($image) use ($file_path, $imageTemplate) {
-            /** @var \Intervention\Image\Image $image */
-            $image->make($file_path);
+        // if gif or original
+        if (str_contains($image_name, 'gif') || ($imageTemplate->isOriginal() && $imageTemplate->isEmptyOptions())) {
+            $response = response($file, 200)
+                ->header('Content-Type', $type);
+        } else {
 
-            // resize
-            if (!$imageTemplate->isOriginal()) {
-                if ($imageTemplate->isHeighten()) {
-                    $image->heighten($imageTemplate->getHeight(), function ($constraint) use ($imageTemplate) {
-                        if ($imageTemplate->isRatio()) {
-                            $constraint->aspectRatio();
+            // convert to image
+            $img = Image::cache(function ($image) use ($file_path, $imageTemplate) {
+                /** @var \Intervention\Image\Image $image */
+                $image->make($file_path);
+
+                // resize
+                if (!$imageTemplate->isOriginal()) {
+                    if ($imageTemplate->isHeighten()) {
+                        $image->heighten($imageTemplate->getHeight(), function ($constraint) use ($imageTemplate) {
+                            if ($imageTemplate->isRatio()) {
+                                $constraint->aspectRatio();
+                            }
+                            $constraint->upsize();
+                        });
+                    } elseif ($imageTemplate->isWiden()) {
+                        $image->widen($imageTemplate->getWidth(), function ($constraint) use ($imageTemplate) {
+                            if ($imageTemplate->isRatio()) {
+                                $constraint->aspectRatio();
+                            }
+                            $constraint->upsize();
+                        });
+                    } elseif ($imageTemplate->isResize()) {
+                        // remain aspect ratio and to its largest possible
+                        if ($imageTemplate->isFit()) {
+                            $image->fit($imageTemplate->getWidth(), $imageTemplate->getHeight());
+                        } else {
+                            $image->resize($imageTemplate->getWidth(), $imageTemplate->getHeight(),
+                                function ($constraint) use ($imageTemplate) {
+                                    if ($imageTemplate->isRatio()) {
+                                        $constraint->aspectRatio();
+                                    }
+                                    $constraint->upsize();
+                                });
                         }
-                        $constraint->upsize();
-                    });
-                } elseif ($imageTemplate->isWiden()) {
-                    $image->widen($imageTemplate->getWidth(), function ($constraint) use ($imageTemplate) {
-                        if ($imageTemplate->isRatio()) {
-                            $constraint->aspectRatio();
-                        }
-                        $constraint->upsize();
-                    });
-                } elseif ($imageTemplate->isResize()) {
-                    // remain aspect ratio and to its largest possible
-                    if ($imageTemplate->isFit()) {
-                        $image->fit($imageTemplate->getWidth(), $imageTemplate->getHeight());
-                    } else {
-                        $image->resize($imageTemplate->getWidth(), $imageTemplate->getHeight(),
-                            function ($constraint) use ($imageTemplate) {
-                                if ($imageTemplate->isRatio()) {
-                                    $constraint->aspectRatio();
-                                }
-                                $constraint->upsize();
-                            });
                     }
                 }
-            }
 
-            // blur
-            $blur_option = $imageTemplate->getOption('blur');
-            if (!empty($blur_option)) {
-                $amount = $blur_option['amount'];
-                $image->blur($amount);
-            }
+                // blur
+                $blur_option = $imageTemplate->getOption('blur');
+                if (!empty($blur_option)) {
+                    $amount = $blur_option['amount'];
+                    $image->blur($amount);
+                }
 
-        }, $cache_minutes, true);
+            }, $cache_minutes, true);
 
+            $response = $img->response();
 
-        return $img->response()->setPublic()
+        }
+
+        return $response->setPublic()
             ->setMaxAge(604800)
             ->setExpires(Carbon::now()->addDay(7));
     }
