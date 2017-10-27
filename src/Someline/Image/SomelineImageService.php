@@ -51,6 +51,14 @@ class SomelineImageService
     }
 
     /**
+     * @return boolean
+     */
+    private function isAlwaysOriginal()
+    {
+        return (boolean)$this->getConfig('always_original', true);
+    }
+
+    /**
      * @param UploadedFile $file
      * @param string $additionValidatorRule
      * @param bool $isAllowGIF
@@ -111,6 +119,7 @@ class SomelineImageService
         $originHeight = $image->getHeight();
         $image_file_size_kb = $file_origin_size / 1024;
         $is_allowed_animated_gif = $is_animated_gif;
+        $isStoreOriginImage = $this->isAlwaysOriginal();
 
         // save as jpg
         $default_file_extension = 'jpg';
@@ -120,6 +129,9 @@ class SomelineImageService
         }
         if ($isStorePNG && $is_file_png) {
             $default_file_extension = 'png';
+        }
+        if ($isStoreOriginImage) {
+            $default_file_extension = $file_extension;
         }
         $storage_path = $this->storagePath();
         $file_sha1 = sha1_file($path_with_name);
@@ -152,7 +164,7 @@ class SomelineImageService
         }
 
         if (!$isExists) {
-            if (($isAllowGIF && $is_allowed_animated_gif) || ($isStorePNG && $is_file_png)) {
+            if (($isStoreOriginImage) || ($isAllowGIF && $is_allowed_animated_gif) || ($isStorePNG && $is_file_png)) {
                 if (File::copy($path_with_name, $final_path_with_name)) {
                     @chmod($final_path_with_name, 0666 & ~umask());
                 } else {

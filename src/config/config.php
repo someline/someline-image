@@ -5,6 +5,11 @@ use Someline\Image\ImageTemplate;
 return array(
 
     /**
+     *  Always store uploaded files without modifications
+     */
+    'always_original' => true,
+
+    /**
      * Default image store quality
      * default: 75
      */
