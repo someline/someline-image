@@ -27,6 +27,14 @@ class SomelineImageService
     }
 
     /**
+     * @return \Illuminate\Filesystem\FilesystemAdapter
+     */
+    public function getStorageDisk()
+    {
+        return \Storage::disk();
+    }
+
+    /**
      * @return string
      */
     private function storagePath()
@@ -66,7 +74,7 @@ class SomelineImageService
      * @param bool $isStorePNG
      * @return SomelineImage
      */
-    public function handleUploadedFile(UploadedFile $file, $additionValidatorRule = '', $isAllowGIF = false, $maxSizeAllowed = 12829, $isStorePNG = false)
+    public function handleUploadedFile(UploadedFile $file, $additionValidatorRule = '', $isAllowGIF = false, $maxSizeAllowed = 12829, $isStorePNG = true)
     {
         // check valid
         if (!$file->isValid()) {
@@ -97,12 +105,13 @@ class SomelineImageService
      * @param bool $isStorePNG
      * @return null|SomelineImage
      */
-    public function storeImageFromPath($path_with_name, $file_extension = null, $isAllowGIF = false, $isStorePNG = false)
+    public function storeImageFromPath($path_with_name, $file_extension = null, $isAllowGIF = false, $isStorePNG = true)
     {
+        $storageDisk = $this->getStorageDisk();
         $file_extension = $file_extension ?: pathinfo($path_with_name, PATHINFO_EXTENSION);
         $is_file_gif = $file_extension == 'gif';
         $is_file_png = $file_extension == 'png';
-        $file_origin_size = filesize($path_with_name);
+        $file_origin_size = File::size($path_with_name);
         $is_animated_gif = $is_file_gif && $this->isAnimatedGif($path_with_name);
 
 
@@ -145,19 +154,19 @@ class SomelineImageService
         $final_path_with_name = $storage_path . $final_file_name;
 
         // check directory
-        if (!self::autoCreateDirectory($final_path_with_name)) {
+        if (!$this->autoCreateDirectoryInDisk($final_path_with_name)) {
             throw new StoreImageException('Failed to make dir: ' . dirname($final_path_with_name));
         }
 
         // save
-        $isExists = File::exists($final_path_with_name);
+        $isExists = $storageDisk->exists($final_path_with_name);
         $isSimilarExists = false;
         $someline_image_hash = null;
         $final_file_sha1 = null;
         $final_file_size = null;
         if ($isExists) {
             $final_file_sha1 = $file_sha1;
-            $final_file_size = filesize($final_path_with_name);
+            $final_file_size = $storageDisk->size($final_path_with_name);
         } else {
             $someline_image_hash = SomelineImageHash::where(['file_sha1' => $file_sha1])->first();
             $isExists = $isSimilarExists = $someline_image_hash ? true : false;
@@ -165,14 +174,18 @@ class SomelineImageService
 
         if (!$isExists) {
             if (($isStoreOriginImage) || ($isAllowGIF && $is_allowed_animated_gif) || ($isStorePNG && $is_file_png)) {
-                if (File::copy($path_with_name, $final_path_with_name)) {
-                    @chmod($final_path_with_name, 0666 & ~umask());
+                $contents = File::get($path_with_name);
+                if ($storageDisk->put($final_path_with_name, $contents, 'public')) {
+                    try {
+                        @chmod($final_path_with_name, 0666 & ~umask());
+                    } catch (\Exception $e) {
+                    }
                 } else {
                     throw new StoreImageException('Failed to move file to path: ' . $final_path_with_name);
                 }
-                $final_file_sha1 = sha1_file($final_path_with_name);
-                $final_file_size = filesize($final_path_with_name);
-                $isExists = File::exists($final_path_with_name);
+                $final_file_sha1 = sha1($storageDisk->get($final_path_with_name));
+                $final_file_size = $storageDisk->size($final_path_with_name);
+                $isExists = $storageDisk->exists($final_path_with_name);
             } else {
                 $isExists = $this->saveImage($image, $exif,
                     $final_path_with_name, $final_file_sha1, $final_file_size);
@@ -224,6 +237,7 @@ class SomelineImageService
             throw new StoreImageException("SomelineImageService: Unable to make image [" + (string)$e + "]");
         }
 
+        $storageDisk = $this->getStorageDisk();
         $is_allowed_animated_gif = $isAllowGIF && $isGIF;
 
         // save as jpg
@@ -243,19 +257,19 @@ class SomelineImageService
         $final_path_with_name = $storage_path . $final_file_name;
 
         // check directory
-        if (!self::autoCreateDirectory($final_path_with_name)) {
+        if (!$this->autoCreateDirectoryInDisk($final_path_with_name)) {
             throw new StoreImageException('Failed to make dir: ' . dirname($final_path_with_name));
         }
 
         // save
-        $isExists = File::exists($final_path_with_name);
+        $isExists = $storageDisk->exists($final_path_with_name);
         $isSimilarExists = false;
         $someline_image_hash = null;
         $final_file_sha1 = null;
         $final_file_size = null;
         if ($isExists) {
             $final_file_sha1 = $file_sha1;
-            $final_file_size = filesize($final_path_with_name);
+            $final_file_size = $storageDisk->size($final_path_with_name);
         } else {
             $someline_image_hash = SomelineImageHash::where(['file_sha1' => $file_sha1])->first();
             $isExists = $isSimilarExists = $someline_image_hash ? true : false;
@@ -268,9 +282,9 @@ class SomelineImageService
                 } else {
                     throw new StoreImageException('Failed to move file to path: ' . $final_path_with_name);
                 }
-                $final_file_sha1 = sha1_file($final_path_with_name);
-                $final_file_size = filesize($final_path_with_name);
-                $isExists = File::exists($final_path_with_name);
+                $final_file_sha1 = sha1($storageDisk->get($final_path_with_name));
+                $final_file_size = $storageDisk->size($final_path_with_name);
+                $isExists = $storageDisk->exists($final_path_with_name);
             } else {
                 $isExists = $this->saveImage($image, $exif,
                     $final_path_with_name, $final_file_sha1, $final_file_size);
@@ -348,9 +362,10 @@ class SomelineImageService
         $storage_path = $storage_path ?: $this->storagePath();
         $image_templates = array_merge($this->getConfig('image_templates', []), $image_templates);
         $file_path = $storage_path . $image_name;
+        $storageDisk = $this->getStorageDisk();
 
         // check exists
-        $isExists = File::exists($file_path);
+        $isExists = $storageDisk->exists($file_path);
         if (!$isExists) {
             abort(404);
         }
@@ -368,8 +383,8 @@ class SomelineImageService
             return response()->download($file_path);
         }
 
-        $file = File::get($file_path);
-        $type = File::mimeType($file_path);
+        $file = $storageDisk->get($file_path);
+        $type = $storageDisk->mimeType($file_path);
 
         // if gif or original
         if (str_contains($image_name, 'gif') || ($imageTemplate->isOriginal() && $imageTemplate->isEmptyOptions())) {
@@ -378,9 +393,9 @@ class SomelineImageService
         } else {
 
             // convert to image
-            $img = Image::cache(function ($image) use ($file_path, $imageTemplate) {
+            $img = Image::cache(function ($image) use ($file, $imageTemplate) {
                 /** @var \Intervention\Image\Image $image */
-                $image->make($file_path);
+                $image->make($file);
 
                 // resize
                 if (!$imageTemplate->isOriginal()) {
@@ -443,6 +458,7 @@ class SomelineImageService
     public function saveImage($image, $exif, $final_path_with_name,
                               &$final_file_sha1 = null, &$final_file_size = null)
     {
+        $storageDisk = $this->getStorageDisk();
         // set correct orientation
         if (!empty($exif) && is_array($exif)) {
             if (isset($exif['Orientation']) && $exif['Orientation'] != 1) {
@@ -503,9 +519,9 @@ class SomelineImageService
 
         // save as JPG
         $image->save($final_path_with_name, $image_quality);
-        $final_file_sha1 = sha1_file($final_path_with_name);
-        $final_file_size = filesize($final_path_with_name);
-        $isSaved = File::exists($final_path_with_name);
+        $final_file_sha1 = sha1($storageDisk->get($final_path_with_name));
+        $final_file_size = $storageDisk->size($final_path_with_name);
+        $isSaved = $storageDisk->exists($final_path_with_name);
         return $isSaved;
     }
 
@@ -581,6 +597,20 @@ class SomelineImageService
             \Log::error("SomelineImageService: Unable to convert to image [" + (string)$e + "]");
             return false;
         }
+    }
+
+    /**
+     * @param $path_name
+     * @return bool
+     */
+    public function autoCreateDirectoryInDisk($path_name)
+    {
+        $storageDisk = $this->getStorageDisk();
+        $dirname = dirname($path_name);
+        if (!$storageDisk->exists($dirname)) {
+            return $storageDisk->makeDirectory($dirname);
+        }
+        return true;
     }
 
     /**
