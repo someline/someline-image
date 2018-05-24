@@ -16,6 +16,17 @@ use Validator;
 class SomelineImageService
 {
 
+    public $isValidateMimes;
+
+    /**
+     * SomelineImageService constructor.
+     * @param bool $isValidateMimes
+     */
+    public function __construct(bool $isValidateMimes = true)
+    {
+        $this->isValidateMimes = $isValidateMimes;
+    }
+
     /**
      * @param $key
      * @param null $default
@@ -84,9 +95,10 @@ class SomelineImageService
         // validate image
         $additionValidatorRule = !empty($additionValidatorRule) ? '|' . $additionValidatorRule : '';
         $mimes = $isAllowGIF ? ',gif' : '';
+        $mimesRule = $this->isValidateMimes ? '|mimes:jpg,jpeg,bmp,png' . $mimes : '';
         /** @var Validator $validator */
         $validator = Validator::make(['image' => $file], [
-            'image' => 'required|mimes:jpg,jpeg,bmp,png' . $mimes . '|max:' . $maxSizeAllowed . $additionValidatorRule,
+            'image' => 'required' . $mimesRule . '|max:' . $maxSizeAllowed . $additionValidatorRule,
         ]);
         if ($validator->fails()) {
             throw new StoreImageException($validator->errors()->first());
@@ -123,9 +135,13 @@ class SomelineImageService
         $exif = read_exif_data_safe($path_with_name);
 
         // passed validation and make image
-        $image = Image::make($path_with_name);
-        $originWidth = $image->getWidth();
-        $originHeight = $image->getHeight();
+        $imageInfo = getimagesize($path_with_name);
+        $imageInfo = [
+            'width' => $imageInfo[0] ?? 0,
+            'height' => $imageInfo[1] ?? 0,
+        ];
+        $originWidth = $imageInfo['width'];
+        $originHeight = $imageInfo['height'];
         $image_file_size_kb = $file_origin_size / 1024;
         $is_allowed_animated_gif = $is_animated_gif;
         $isStoreOriginImage = $this->isAlwaysOriginal();
@@ -187,6 +203,7 @@ class SomelineImageService
                 $final_file_size = $storageDisk->size($final_path_with_name);
                 $isExists = $storageDisk->exists($final_path_with_name);
             } else {
+                $image = Image::make($path_with_name);
                 $isExists = $this->saveImage($image, $exif,
                     $final_path_with_name, $final_file_sha1, $final_file_size);
             }
@@ -196,7 +213,7 @@ class SomelineImageService
         $someline_image = null;
         if ($isExists) {
             $someline_image = $this->saveImageInfo($isSimilarExists, $someline_image_hash,
-                $final_file_name, $is_allowed_animated_gif, $final_file_size, $image, $exif,
+                $final_file_name, $is_allowed_animated_gif, $final_file_size, $imageInfo, $exif,
                 $file_sha1, $final_file_sha1);
         }
 
@@ -537,7 +554,7 @@ class SomelineImageService
      * @param $final_file_sha1
      * @return SomelineImage
      */
-    private function saveImageInfo($isSimilarExists, $someline_image_hash, $final_file_name, $is_allowed_animated_gif, $final_file_size, $image, $exif, $file_sha1, $final_file_sha1)
+    private function saveImageInfo($isSimilarExists, $someline_image_hash, $final_file_name, $is_allowed_animated_gif, $final_file_size, $imageInfo, $exif, $file_sha1, $final_file_sha1)
     {
         // check has someline image
         if ($isSimilarExists) {
@@ -556,8 +573,8 @@ class SomelineImageService
                 'is_gif' => $is_allowed_animated_gif,
                 'exif' => $exif_data,
                 'file_size' => $final_file_size,
-                'width' => $image->getWidth(),
-                'height' => $image->getHeight(),
+                'width' => $imageInfo['width'],
+                'height' => $imageInfo['height'],
             ]);
 
             // add to image hash
