@@ -412,7 +412,7 @@ class SomelineImageService
             // convert to image
             $img = Image::cache(function ($image) use ($file, $imageTemplate) {
                 /** @var \Intervention\Image\Image $image */
-                $image->make($file);
+                $image = $image->make($file)->orientate();
 
                 // resize
                 if (!$imageTemplate->isOriginal()) {
