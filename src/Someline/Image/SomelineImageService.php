@@ -401,6 +401,7 @@ class SomelineImageService
         }
 
         $file = $storageDisk->get($file_path);
+        $full_file_path = $storageDisk->path($file_path);
         $type = $storageDisk->mimeType($file_path);
 
         // if gif or original
@@ -408,11 +409,10 @@ class SomelineImageService
             $response = response($file, 200)
                 ->header('Content-Type', $type);
         } else {
-
             // convert to image
-            $img = Image::cache(function ($image) use ($file, $imageTemplate) {
+            $img = Image::cache(function ($image) use ($full_file_path, $imageTemplate) {
                 /** @var \Intervention\Image\Image $image */
-                $image = $image->make($file)->orientate();
+                $image = $image->make($full_file_path)->orientate();
 
                 // resize
                 if (!$imageTemplate->isOriginal()) {
