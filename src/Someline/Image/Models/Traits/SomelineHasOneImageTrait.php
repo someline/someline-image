@@ -24,7 +24,7 @@ trait SomelineHasOneImageTrait
     }
 
     /**
-     * @return \Illuminate\Contracts\Routing\UrlGenerator|null|string
+     * @return null|string
      */
     public function getSomelineImageUrl()
     {
@@ -34,7 +34,7 @@ trait SomelineHasOneImageTrait
 
     /**
      * @param $type
-     * @return \Illuminate\Contracts\Routing\UrlGenerator|null|string
+     * @return null|string
      */
     public function getSomelineImageUrlForType($type)
     {
@@ -50,7 +50,7 @@ trait SomelineHasOneImageTrait
     }
 
     /**
-     * @return \Illuminate\Contracts\Routing\UrlGenerator|null|string
+     * @return null|string
      */
     public function getSomelineImageUrlAttribute()
     {
